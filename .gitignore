@@ -1,4 +1,3 @@
-Binaries/
-TradeZest/Binaries
+Build/
 .vs/
 Secrets.hpp
