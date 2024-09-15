@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "HTTPRequest.hpp"
 
 namespace http = boost::beast::http;
@@ -12,18 +14,17 @@ constexpr const char CERT_PATH[] = "C:/Users/ariel/Documents/Projects/cpp/TradeZ
 HTTPRequest::HTTPRequest() 
     : m_IOContext(),
       m_SSLContext(ssl::context::sslv23),
-      m_Resolver(m_IOContext),
-      m_Stream(m_IOContext, m_SSLContext)
+      m_Resolver(m_IOContext)
 {
     m_SSLContext.set_default_verify_paths();
     m_SSLContext.set_verify_mode(boost::asio::ssl::verify_peer);
     m_SSLContext.load_verify_file(CERT_PATH);
 }
 
-auto HTTPRequest::connect(const url& endpoint)
+auto HTTPRequest::Connect(ssl::stream<boost::beast::tcp_stream>& stream, const url& endpoint)
 {
     // This check needs to happen otherwise OpenSSL doesn't know the domain
-    if (!SSL_set_tlsext_host_name(m_Stream.native_handle(), endpoint.host().c_str()))
+    if (!SSL_set_tlsext_host_name(stream.native_handle(), endpoint.host().c_str()))
     {
         boost::beast::error_code ec{ static_cast<int>(::ERR_get_error()), net::error::get_ssl_category() };
         throw boost::beast::system_error{ ec };
@@ -36,15 +37,15 @@ auto HTTPRequest::connect(const url& endpoint)
     }
 
     auto hostIP = m_Resolver.resolve(endpoint.host(), port);
-    boost::beast::get_lowest_layer(m_Stream).connect(hostIP);
+    boost::beast::get_lowest_layer(stream).connect(hostIP);
 
-    m_Stream.handshake(ssl::stream_base::client);
+    stream.handshake(ssl::stream_base::client);
 }
 
-void HTTPRequest::disconnect()
+void HTTPRequest::Disconnect(ssl::stream<boost::beast::tcp_stream>& stream)
 {
     boost::beast::error_code errorCode;
-    m_Stream.shutdown(errorCode);
+    boost::beast::get_lowest_layer(stream).socket().shutdown(tcp::socket::shutdown_both, errorCode);
 
     if (errorCode && errorCode != ssl::error::stream_truncated)
     {
@@ -52,14 +53,16 @@ void HTTPRequest::disconnect()
     }
 }
 
-http::status HTTPRequest::make(
+http::status HTTPRequest::Make(
     const url& endpoint,
     const http::verb method,
     const std::unordered_map<std::string, std::string>& headers,
     const json::object& body,
     json::object& jsonResponse)
 {
-    connect(endpoint);
+    boost::asio::ssl::stream<boost::beast::tcp_stream> stream(m_IOContext, m_SSLContext);
+
+    Connect(stream, endpoint);
 
     // Create request
     http::request<http::string_body> request{method, endpoint.encoded_target(), 11};
@@ -72,19 +75,31 @@ http::status HTTPRequest::make(
     {
         request.set(header.first, header.second);
     }
-    
-    request.body() = json::serialize(body);
-    request.prepare_payload();
-    http::write(m_Stream, request);
+
+    if (!body.empty())
+    {
+        request.body() = json::serialize(body);
+        request.prepare_payload();
+    }
+
+    http::write(stream, request);
 
     // Read response
     boost::beast::flat_buffer buffer;
     http::response<http::string_body> http_response;
-    http::read(m_Stream, buffer, http_response);
+    http::read(stream, buffer, http_response);
 
-    boost::json::value json_value = boost::json::parse(http_response.body());
-    jsonResponse = json_value.as_object();
+    // We expect to talk just with JSON APIs so we return empty if it fails to process it
+    try
+    {
+        boost::json::value json_value = boost::json::parse(http_response.body());
+        jsonResponse = json_value.as_object();
+    }
+    catch (boost::system::system_error e)
+    {
+        jsonResponse = {};
+    }
 
-    disconnect();
+    Disconnect(stream);
     return http_response.result();
 }

@@ -25,7 +25,7 @@ public:
     HTTPRequest(const HTTPRequest&&) = delete;
     HTTPRequest& operator=(const HTTPRequest&&) = delete;
 
-    boost::beast::http::status make(
+    boost::beast::http::status Make(
         const boost::urls::url& url,
         const boost::beast::http::verb method,
         const std::unordered_map<std::string, std::string>& headers, 
@@ -34,13 +34,10 @@ public:
 private:
     HTTPRequest();
 
-    auto connect(const boost::urls::url& endpoint);
-    void disconnect();
+    auto Connect(boost::asio::ssl::stream<boost::beast::tcp_stream>& stream, const boost::urls::url& endpoint);
+    void Disconnect(boost::asio::ssl::stream<boost::beast::tcp_stream>& stream);
        
     boost::asio::io_context m_IOContext;
     boost::asio::ssl::context m_SSLContext;
     boost::asio::ip::tcp::resolver m_Resolver;
-    boost::asio::ssl::stream<boost::beast::tcp_stream> m_Stream;
 };
-
-// Need to create few test for this singleton

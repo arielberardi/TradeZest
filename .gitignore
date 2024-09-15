@@ -1,3 +1,4 @@
 Binaries/
 TradeZest/Binaries
 .vs/
+Secrets.hpp
