@@ -1,0 +1,3 @@
+# TradeZest
+
+A HFT bot
