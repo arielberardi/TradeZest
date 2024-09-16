@@ -49,7 +49,8 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "*.ipp": "cpp"
     },
     "editor.insertSpaces": true,
     "editor.comments.insertSpace": true,

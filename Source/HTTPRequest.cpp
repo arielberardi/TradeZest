@@ -2,15 +2,14 @@
 
 #include <iostream>
 
+#include "Secrets.hpp"
+
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 namespace ssl = net::ssl;
 namespace json = boost::json;
 using url = boost::urls::url;
 using tcp = net::ip::tcp;
-
-constexpr const char CERT_PATH[] =
-    "C:/Users/ariel/Documents/Projects/cpp/TradeZest/Binaries/x64/Debug/ca.pem";
 
 HTTPRequest::HTTPRequest()
     : m_IOContext(), m_SSLContext(ssl::context::sslv23), m_Resolver(m_IOContext) {

@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
 
-// #include "HTTPRequest.hpp"
-// #include "Broker.hpp"
+#include "Broker.hpp"
+#include "HTTPRequest.hpp"
 
 int main() {
-  // Broker broker{ API_KEY };
+  Broker broker{API_KEY};
+  std::cout << broker.GetAccountId() << std::endl;
 }
