@@ -41,10 +41,12 @@ include(GoogleTest)
 
 ### BUILD PROJECT ####
 
+# add_definitions(-DNDEBUG)
+
 include_directories(${PROJECT_SOURCE_DIR}/Source)
+include_directories(${PROJECT_SOURCE_DIR})
 
 set(SOURCES
-    Source/Broker.cpp
     Source/HTTPRequest.cpp
 )
 
@@ -72,7 +74,12 @@ add_custom_command(
 ### BUILD TESTS ###
 enable_testing()
 
-add_executable(Main_test ${SOURCES} Tests/Main.cpp)
-target_link_libraries(Main_test ${GOOGLE_TEST_LIBRARIES} ${LIBRARIES})
+set(TEST_FILES
+    BrokerTest
+)
 
-gtest_discover_tests(Main_test)
+foreach(file ${TEST_FILES})
+    add_executable(${file}_test ${SOURCES} Tests/${file}.cpp)
+    target_link_libraries(${file}_test ${GOOGLE_TEST_LIBRARIES} ${LIBRARIES})
+    gtest_discover_tests(${file}_test)
+endforeach()

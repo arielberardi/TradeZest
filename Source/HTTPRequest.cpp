@@ -1,7 +1,6 @@
-#include "HTTPRequest.hpp"
-
 #include <iostream>
 
+#include "HTTPRequest.hpp"
 #include "Secrets.hpp"
 
 namespace http = boost::beast::http;
@@ -18,7 +17,7 @@ HTTPRequest::HTTPRequest() : m_IOContext(), m_SSLContext(ssl::context::sslv23), 
     m_SSLContext.load_verify_file(CERT_PATH);
 }
 
-auto HTTPRequest::Connect(ssl::stream<boost::beast::tcp_stream> &stream, const url &endpoint)
+auto HTTPRequest::Connect(ssl::stream<boost::beast::tcp_stream>& stream, const url& endpoint)
 {
     // This check needs to happen otherwise OpenSSL doesn't know the domain
     if (!SSL_set_tlsext_host_name(stream.native_handle(), endpoint.host().c_str()))
@@ -39,7 +38,7 @@ auto HTTPRequest::Connect(ssl::stream<boost::beast::tcp_stream> &stream, const u
     stream.handshake(ssl::stream_base::client);
 }
 
-void HTTPRequest::Disconnect(ssl::stream<boost::beast::tcp_stream> &stream)
+void HTTPRequest::Disconnect(ssl::stream<boost::beast::tcp_stream>& stream)
 {
     boost::beast::error_code errorCode;
     boost::beast::get_lowest_layer(stream).socket().shutdown(tcp::socket::shutdown_both, errorCode);
@@ -50,11 +49,11 @@ void HTTPRequest::Disconnect(ssl::stream<boost::beast::tcp_stream> &stream)
     }
 }
 
-http::status HTTPRequest::Make(const url &endpoint,
+http::status HTTPRequest::Make(const url& endpoint,
                                const http::verb method,
-                               const std::unordered_map<std::string, std::string> &headers,
-                               const json::object &body,
-                               json::object &jsonResponse)
+                               const std::unordered_map<std::string, std::string>& headers,
+                               const json::object& body,
+                               json::object& jsonResponse)
 {
     boost::asio::ssl::stream<boost::beast::tcp_stream> stream(m_IOContext, m_SSLContext);
 
@@ -67,7 +66,7 @@ http::status HTTPRequest::Make(const url &endpoint,
     request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     request.set(http::field::content_type, "application/json");
 
-    for (auto &header : headers)
+    for (auto& header : headers)
     {
         request.set(header.first, header.second);
     }
