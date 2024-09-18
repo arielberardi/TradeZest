@@ -1,16 +1,17 @@
 #include <iostream>
 #include <string>
 
-#include "Broker.hpp"
 #include "HTTPRequest.hpp"
+#include "OandaApi.hpp"
 #include "Secrets.hpp"
 
 int main()
 {
     HTTPRequest httpClient{};
 
-    Broker<HTTPRequest> broker{API_KEY, httpClient};
+    OandaApi<HTTPRequest> broker{API_KEY, API_ENDPOINT, httpClient};
+    std::string accountId = broker.GetAccountId();
 
-    std::cout << broker.GetAccountId() << std::endl;
-    std::cout << broker.GetAccountDetails() << std::endl;
+    std::cout << accountId << std::endl;
+    std::cout << broker.GetAccountDetails(accountId) << std::endl;
 }

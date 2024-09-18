@@ -75,11 +75,11 @@ add_custom_command(
 enable_testing()
 
 set(TEST_FILES
-    BrokerTest
+    OandaApi
 )
 
 foreach(file ${TEST_FILES})
-    add_executable(${file}_test ${SOURCES} Tests/${file}.cpp)
+    add_executable(${file}_test ${SOURCES} Tests/${file}Test.cpp)
     target_link_libraries(${file}_test ${GOOGLE_TEST_LIBRARIES} ${LIBRARIES})
     gtest_discover_tests(${file}_test)
 endforeach()
