@@ -5,6 +5,7 @@
 #include "Tests/Mocks/MockHttpRequest.hpp"
 
 using ::testing::_;
+using ::testing::An;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::SetArgReferee;
@@ -30,7 +31,6 @@ TEST(OandaApiTest, GetAccountIdSuccess)
     };
 
     boost::urls::url url{std::string(API_ENDPOINT) + "/accounts"};
-
     MockHttpRequest mockHttpRequest{};
     EXPECT_CALL(mockHttpRequest, Make(url, boost::beast::http::verb::get, _, _, _))
         .WillOnce(DoAll(SetArgReferee<4>(response), Return(boost::beast::http::status::ok)));
@@ -42,8 +42,10 @@ TEST(OandaApiTest, GetAccountIdSuccess)
 
 TEST(OandaApiTest, GetAccountIdFailure)
 {
+    boost::urls::url url{std::string(API_ENDPOINT) + "/accounts"};
     MockHttpRequest mockHttpRequest{};
-    EXPECT_CALL(mockHttpRequest, Make).WillOnce(Return(boost::beast::http::status::bad_request));
+    EXPECT_CALL(mockHttpRequest, Make(url, boost::beast::http::verb::get, _, _, _))
+        .WillOnce(Return(boost::beast::http::status::bad_request));
 
     OandaApi<MockHttpRequest> broker{API_KEY, API_ENDPOINT, mockHttpRequest};
 

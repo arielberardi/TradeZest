@@ -1,4 +1,6 @@
 #include <iostream>
+#include <ranges>
+#include <string>
 
 #include "HTTPRequest.hpp"
 #include "Secrets.hpp"
@@ -66,10 +68,7 @@ http::status HTTPRequest::Make(const url& endpoint,
     request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     request.set(http::field::content_type, "application/json");
 
-    for (auto& header : headers)
-    {
-        request.set(header.first, header.second);
-    }
+    std::ranges::for_each(headers, [&request](const auto& header) { request.set(header.first, header.second); });
 
     if (!body.empty())
     {

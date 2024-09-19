@@ -1,15 +1,17 @@
 #pragma once
 
+#include <cassert>
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/json.hpp>
 #include <boost/url/url.hpp>
-#include <cassert>
-#include <iostream>
-#include <string>
-#include <unordered_map>
 
 enum class OrderType
 {
@@ -58,21 +60,21 @@ struct OrderRequest
 template <typename HttpClient> class OandaApi
 {
   public:
-    OandaApi(const std::string& api_key, const std::string& endpoint, HttpClient& httpClient)
+    OandaApi(std::string_view api_key, std::string_view endpoint, HttpClient& httpClient)
         : m_HttpClient(httpClient), m_Endpoint(endpoint)
     {
-        m_Headers.insert({"Authorization", "Bearer " + api_key});
+        m_Headers.insert({"Authorization", "Bearer " + std::string(api_key)});
         m_Headers.insert({"Content-Type", "application/json"});
     }
 
     std::string GetAccountId()
     {
-        const boost::urls::url url{m_Endpoint + "/accounts"};
+        const std::string url = std::format("{}/accounts", m_Endpoint);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -83,14 +85,14 @@ template <typename HttpClient> class OandaApi
         return account["id"].get_string().c_str();
     }
 
-    boost::json::object GetAccountDetails(const std::string& accountId) const
+    boost::json::object GetAccountDetails(std::string_view accountId) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId)};
+        const std::string url = std::format("{}/accounts/{}", m_Endpoint, accountId);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -100,14 +102,14 @@ template <typename HttpClient> class OandaApi
         return response["account"].as_object();
     }
 
-    boost::json::array GetOrders(const std::string& accountId) const
+    boost::json::array GetOrders(std::string_view accountId) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/orders"};
+        const std::string url = std::format("{}/accounts/{}/orders", m_Endpoint, accountId);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -117,14 +119,14 @@ template <typename HttpClient> class OandaApi
         return response["orders"].as_array();
     }
 
-    boost::json::array GetPendingOrders(const std::string& accountId) const
+    boost::json::array GetPendingOrders(std::string_view accountId) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/pendingOrders"};
+        const std::string url = std::format("{}/accounts/{}/pendingOrders", m_Endpoint, accountId);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -134,14 +136,14 @@ template <typename HttpClient> class OandaApi
         return response["orders"].as_array();
     }
 
-    boost::json::object GetOrder(const std::string& accountId, const std::string& orderId) const
+    boost::json::object GetOrder(std::string_view accountId, std::string_view orderId) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/orders/" + orderId};
+        const std::string url = std::format("{}/accounts/{}/orders/{}", m_Endpoint, accountId, orderId);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -151,16 +153,16 @@ template <typename HttpClient> class OandaApi
         return response["order"].as_object();
     }
 
-    std::string CreateOrder(const std::string& accountId, const OrderRequest& order) const
+    std::string CreateOrder(std::string_view accountId, OrderRequest& order) const
     {
         boost::json::object body{};
         body["order"] = GenerateBodyRequest(order);
 
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/orders"};
+        const std::string url = std::format("{}/accounts/{}/orders", m_Endpoint, accountId);
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::post, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::post, m_Headers, body, response);
 
         if (result != boost::beast::http::status::created)
         {
@@ -171,14 +173,14 @@ template <typename HttpClient> class OandaApi
         return transaction["id"].get_string().c_str();
     }
 
-    bool CancelOrder(const std::string& accountId, const std::string& orderId) const
+    bool CancelOrder(std::string_view accountId, std::string_view orderId) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/orders/" + orderId + "/cancel"};
+        const std::string url = std::format("{}/accounts/{}/orders/{}/cancel", m_Endpoint, accountId, orderId);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::put, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::put, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -188,14 +190,14 @@ template <typename HttpClient> class OandaApi
         return true;
     }
 
-    boost::json::object GetPosition(const std::string& accountId, const std::string& instrument) const
+    boost::json::object GetPosition(std::string_view accountId, std::string_view instrument) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/positions/" + instrument};
+        const std::string url = std::format("{}/accounts/{}/positions/{}", m_Endpoint, accountId, instrument);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -205,14 +207,14 @@ template <typename HttpClient> class OandaApi
         return response["position"].as_object();
     }
 
-    boost::json::array GetOpenPositions(const std::string& accountId) const
+    boost::json::array GetOpenPositions(std::string_view accountId) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/openPositions"};
+        const std::string url = std::format("{}/accounts/{}/openPositions", m_Endpoint, accountId);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -222,14 +224,14 @@ template <typename HttpClient> class OandaApi
         return response["positions"].as_array();
     }
 
-    bool ClosePosition(const std::string& accountId, const std::string& instrument) const
+    bool ClosePosition(std::string_view accountId, std::string_view instrument) const
     {
-        const boost::urls::url url{GetAccountEndpoint(accountId) + "/positions/" + instrument + "/close"};
+        const std::string url = std::format("{}/accounts/{}/positions/{}/close", m_Endpoint, accountId, instrument);
         const boost::json::object body{};
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::put, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::put, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -239,16 +241,16 @@ template <typename HttpClient> class OandaApi
         return true;
     }
 
-    boost::json::object GetPricing(const std::string& accountId, const std::string& instrument) const
+    boost::json::object GetPricing(std::string_view accountId, std::string_view instrument) const
     {
         boost::json::object response{};
         const boost::json::object body{};
 
-        boost::urls::url url{GetAccountEndpoint(accountId) + "/pricing"};
+        boost::urls::url url{std::format("{}/accounts/{}/pricing", m_Endpoint, accountId)};
         url.params().set("instruments", instrument);
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -258,14 +260,14 @@ template <typename HttpClient> class OandaApi
         return response;
     }
 
-    boost::json::array GetCandles(const std::string& accountId,
-                                  const std::string& instrument,
+    boost::json::array GetCandles(std::string_view accountId,
+                                  std::string_view instrument,
                                   CandleGranularity granularity = CandleGranularity::S5,
                                   int count = 500,
                                   std::string from = "",
                                   std::string to = "") const
     {
-        boost::urls::url url{GetAccountEndpoint(accountId) + "/instruments/" + instrument + "/candles"};
+        boost::urls::url url{std::format("{}/accounts/{}/instruments/{}/candles", m_Endpoint, accountId, instrument)};
         url.params().set("granularity", GranularityToString(granularity));
         url.params().set("count", std::to_string(count));
 
@@ -283,7 +285,7 @@ template <typename HttpClient> class OandaApi
         boost::json::object response{};
 
         boost::beast::http::status result =
-            m_HttpClient.Make(url, boost::beast::http::verb::get, m_Headers, body, response);
+            m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::get, m_Headers, body, response);
 
         if (result != boost::beast::http::status::ok)
         {
@@ -311,11 +313,6 @@ template <typename HttpClient> class OandaApi
     constexpr std::string GranularityToString(const CandleGranularity granularity) const noexcept
     {
         return m_CandleGranularityNames.at(static_cast<size_t>(granularity));
-    }
-
-    std::string GetAccountEndpoint(const std::string& id) const noexcept
-    {
-        return m_Endpoint + "/accounts/" + id;
     }
 
     boost::json::object GenerateBodyRequest(const OrderRequest& order) const noexcept
