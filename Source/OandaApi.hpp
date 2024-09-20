@@ -61,9 +61,10 @@ template <typename HttpClient> class OandaApi
 {
   public:
     OandaApi(std::string_view api_key, std::string_view endpoint, HttpClient& httpClient)
-        : m_HttpClient(httpClient), m_Endpoint(endpoint)
+        : m_HttpClient{httpClient}, m_Endpoint{endpoint}
     {
-        m_Headers.insert({"Authorization", "Bearer " + std::string(api_key)});
+        std::string token = std::format("Bearer {}", api_key);
+        m_Headers.insert({"Authorization", token});
         m_Headers.insert({"Content-Type", "application/json"});
     }
 
@@ -297,9 +298,9 @@ template <typename HttpClient> class OandaApi
 
   private:
     std::unordered_map<std::string, std::string> m_Headers{};
-    std::string m_Endpoint{};
-
+    std::string m_Endpoint;
     HttpClient& m_HttpClient;
+
     const std::array<std::string, 4> m_OrderNames{"MARKET", "LIMIT", "TAKE_PROFIT", "STOP"};
     const std::array<std::string, 21> m_CandleGranularityNames{"S5", "S10", "S15", "S30", "M1", "M2", "M4",
                                                                "M5", "M10", "M15", "M30", "H1", "H2", "H3",
