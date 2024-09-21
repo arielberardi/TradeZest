@@ -1,14 +1,19 @@
 #include <iostream>
 #include <string>
 
+#include "ConfigManager.hpp"
 #include "HTTPRequest.hpp"
 #include "OandaApi.hpp"
-#include "Secrets.hpp"
 
 int main()
 {
+    ConfigManager::Instance().Load("config.txt");
+
+    std::string apiKey = ConfigManager::Instance().Get("API_KEY", "default");
+    std::string apiEndpoint = ConfigManager::Instance().Get("API_ENDPOINT", "defaultEndpoint");
+
     HTTPRequest httpClient{};
-    OandaApi<HTTPRequest> broker{API_KEY, API_ENDPOINT, httpClient};
+    OandaApi<HTTPRequest> broker{apiKey, apiEndpoint, httpClient};
     std::string accountId{broker.GetAccountId()};
 
     std::cout << accountId << std::endl;

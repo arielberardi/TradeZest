@@ -301,19 +301,47 @@ template <typename HttpClient> class OandaApi
     std::string m_Endpoint;
     HttpClient& m_HttpClient;
 
-    const std::array<std::string, 4> m_OrderNames{"MARKET", "LIMIT", "TAKE_PROFIT", "STOP"};
-    const std::array<std::string, 21> m_CandleGranularityNames{"S5", "S10", "S15", "S30", "M1", "M2", "M4",
-                                                               "M5", "M10", "M15", "M30", "H1", "H2", "H3",
-                                                               "H4", "H6",  "H8",  "H12", "D",  "W",  "A"};
-
-    constexpr std::string OrderToString(const OrderType order) const noexcept
+    constexpr std::string_view OrderToString(const OrderType order) const noexcept
     {
-        return m_OrderNames.at(static_cast<size_t>(order));
+        switch (order)
+        {
+            case OrderType::Market: return "MARKET";
+            case OrderType::Limit: return "LIMIT";
+            case OrderType::TakeProfit: return "TAKE_PROFIT";
+            case OrderType::Stop: return "STOP";
+        }
+
+        return "";
     }
 
-    constexpr std::string GranularityToString(const CandleGranularity granularity) const noexcept
+    constexpr std::string_view GranularityToString(const CandleGranularity granularity) const noexcept
     {
-        return m_CandleGranularityNames.at(static_cast<size_t>(granularity));
+        switch (granularity)
+        {
+            case CandleGranularity::S5: return "S5";
+            case CandleGranularity::S10: return "S10";
+            case CandleGranularity::S15: return "S15";
+            case CandleGranularity::S30: return "S30";
+            case CandleGranularity::M1: return "M1";
+            case CandleGranularity::M2: return "M2";
+            case CandleGranularity::M4: return "M4";
+            case CandleGranularity::M5: return "M5";
+            case CandleGranularity::M10: return "M10";
+            case CandleGranularity::M15: return "M15";
+            case CandleGranularity::M30: return "M30";
+            case CandleGranularity::H1: return "H1";
+            case CandleGranularity::H2: return "H2";
+            case CandleGranularity::H3: return "H3";
+            case CandleGranularity::H4: return "H4";
+            case CandleGranularity::H6: return "H6";
+            case CandleGranularity::H8: return "H8";
+            case CandleGranularity::H12: return "H12";
+            case CandleGranularity::D: return "D";
+            case CandleGranularity::W: return "W";
+            case CandleGranularity::A: return "A";
+        }
+
+        return "";
     }
 
     boost::json::object GenerateBodyRequest(const OrderRequest& order) const noexcept

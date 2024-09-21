@@ -1,9 +1,11 @@
 #include <iostream>
 #include <ranges>
 #include <string>
+#include <string_view>
 
 #include "HTTPRequest.hpp"
-#include "Secrets.hpp"
+
+static constexpr std::string_view CERT_PATH{"ca.pem"};
 
 namespace http = boost::beast::http;
 namespace net = boost::asio;
@@ -16,7 +18,7 @@ HTTPRequest::HTTPRequest() : m_IOContext(), m_SSLContext(ssl::context::sslv23), 
 {
     m_SSLContext.set_default_verify_paths();
     m_SSLContext.set_verify_mode(boost::asio::ssl::verify_peer);
-    m_SSLContext.load_verify_file(CERT_PATH);
+    m_SSLContext.load_verify_file(std::string(CERT_PATH));
 }
 
 auto HTTPRequest::Connect(ssl::stream<boost::beast::tcp_stream>& stream, const url& endpoint)
@@ -68,7 +70,7 @@ http::status HTTPRequest::Make(const url& endpoint,
     request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     request.set(http::field::content_type, "application/json");
 
-    std::ranges::for_each(headers, [&request](const auto& header) { request.set(header.first, header.second); });
+    std::ranges::for_each(headers, [&request](auto&& header) { request.set(header.first, header.second); });
 
     if (!body.empty())
     {

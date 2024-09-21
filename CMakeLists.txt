@@ -48,6 +48,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 set(SOURCES
     Source/HTTPRequest.cpp
+    Source/ConfigManager.cpp
 )
 
 set(LIBRARIES
@@ -68,6 +69,16 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/ca.pem"
             "${CMAKE_BINARY_DIR}/ca.pem"
+)
+
+# Copy config.txt file to binary folder
+set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/config.txt")
+add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/config.txt"
+            "${CMAKE_BINARY_DIR}/config.txt"
 )
 
 
