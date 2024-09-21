@@ -1,2 +1,2 @@
-API_ENDPOINT = ""
-API_KEY = ""
+API_ENDPOINT = http://myendpoint/api/v3
+API_KEY = mykeyhash123

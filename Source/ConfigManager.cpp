@@ -51,7 +51,7 @@ bool ConfigManager::Load(const std::string& filePath)
         return false;
     }
 
-    std::fstream file(filePath);
+    std::fstream file{filePath};
 
     if (!file.is_open())
     {
