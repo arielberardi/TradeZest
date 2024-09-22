@@ -83,7 +83,7 @@ template <typename HttpClient> class OandaApi
         }
 
         boost::json::object account = response["accounts"].as_array().at(0).as_object();
-        return account["id"].get_string().c_str();
+        return std::string(account["id"].as_string());
     }
 
     boost::json::object GetAccountDetails(std::string_view accountId) const
@@ -159,11 +159,14 @@ template <typename HttpClient> class OandaApi
         boost::json::object body{};
         body["order"] = GenerateBodyRequest(order);
 
+        std::cout << body << std::endl;
+
         const std::string url = std::format("{}/accounts/{}/orders", m_Endpoint, accountId);
         boost::json::object response{};
-
         boost::beast::http::status result =
             m_HttpClient.Make(boost::urls::url{url}, boost::beast::http::verb::post, m_Headers, body, response);
+
+        std::cout << response << std::endl;
 
         if (result != boost::beast::http::status::created)
         {
@@ -171,7 +174,7 @@ template <typename HttpClient> class OandaApi
         }
 
         auto& transaction = response["orderCreateTransaction"].as_object();
-        return transaction["id"].get_string().c_str();
+        return std::string(transaction["id"].as_string());
     }
 
     bool CancelOrder(std::string_view accountId, std::string_view orderId) const
@@ -258,7 +261,7 @@ template <typename HttpClient> class OandaApi
             return boost::json::object{};
         }
 
-        return response;
+        return response["prices"].as_array().at(0).as_object();
     }
 
     boost::json::array GetCandles(std::string_view accountId,
@@ -356,18 +359,24 @@ template <typename HttpClient> class OandaApi
 
         if (order.type != OrderType::Market)
         {
-            orderBody["priceBound"] = order.price;
+            orderBody["price"] = order.price;
             orderBody["timeInForce"] = "GTC";
-        }
 
-        if (!order.takeProfitPrice.empty())
-        {
-            orderBody["takeProfitOnFill"] = {"price", order.takeProfitPrice};
-        }
+            if (!order.takeProfitPrice.empty())
+            {
+                orderBody["takeProfitOnFill"] = boost::json::object{
+                    {"price", order.takeProfitPrice},
+                    {"timeInForce", "GTC"},
+                };
+            }
 
-        if (!order.stopLossPrice.empty())
-        {
-            orderBody["stopLossOnFill"] = {"price", order.stopLossPrice};
+            if (!order.stopLossPrice.empty())
+            {
+                orderBody["stopLossOnFill"] = boost::json::object{
+                    {"price", order.stopLossPrice},
+                    {"timeInForce", "GTC"},
+                };
+            }
         }
 
         if (order.type == OrderType::TakeProfit || order.type == OrderType::Stop)

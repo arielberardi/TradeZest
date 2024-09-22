@@ -427,7 +427,7 @@ TEST(OandaApiTest, GetPricingSuccess)
                 boost::json::object{
                     {"instrument", INSTRUMENT},
                     {"status", "tradeable"} //
-                } //
+                },                          //
             } //
         } //
     };
@@ -440,7 +440,12 @@ TEST(OandaApiTest, GetPricingSuccess)
 
     OandaApi<MockHttpRequest> broker{API_KEY, API_ENDPOINT, mockHttpRequest};
 
-    EXPECT_EQ(broker.GetPricing(ACCOUNT_ID, INSTRUMENT), response);
+    boost::json::object expectedResponse{
+        {"instrument", INSTRUMENT},
+        {"status", "tradeable"} //
+    };
+
+    EXPECT_EQ(broker.GetPricing(ACCOUNT_ID, INSTRUMENT), expectedResponse);
 }
 
 TEST(OandaApiTest, GetPricingFailure)
